@@ -14,6 +14,13 @@ jobs:
   build-and-release:
     runs-on: macos-latest
 
+    env:
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_DEVELOPER_IDENTITY: ${{ secrets.APPLE_DEVELOPER_IDENTITY }}
+      CI: true
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -27,6 +34,26 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+    
+    # Set up Apple certificates for code signing
+    - name: Import Apple Developer Certificate
+      if: env.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 && env.APPLE_DEVELOPER_CERTIFICATE_PASSWORD
+      run: |
+        # Create a temporary directory for the certificate
+        mkdir -p $RUNNER_TEMP/certificates
+        
+        # Decode the base64 certificate and save it to a file
+        echo "${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}" | base64 --decode > $RUNNER_TEMP/certificates/certificate.p12
+        
+        # Import the certificate to the keychain
+        security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+        security import $RUNNER_TEMP/certificates/certificate.p12 -k build.keychain -P "${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+        
+        # Clean up
+        rm -rf $RUNNER_TEMP/certificates
     
     - name: Determine next version
       id: version

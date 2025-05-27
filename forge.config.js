@@ -8,6 +8,20 @@ module.exports = {
     executableName: 'oioio',
     appBundleId: 'com.oioio.app',
     icon: './assets/icons/oioio',
+    osxSign: {
+      identity: process.env.APPLE_DEVELOPER_IDENTITY,
+      hardenedRuntime: true,
+      entitlements: 'entitlements.plist',
+      entitlementsInherit: 'entitlements.plist',
+      'gatekeeper-assess': false,
+    },
+    osxNotarize: process.env.CI ? {
+      appBundleId: 'com.oioio.app',
+      appleId: process.env.APPLE_ID,
+      appleIdPassword: process.env.APPLE_ID_PASSWORD,
+      teamId: process.env.APPLE_TEAM_ID,
+    } : undefined,
+    afterSign: './afterSign.js',
   },
   rebuildConfig: {},
   makers: [

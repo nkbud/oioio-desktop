@@ -4,12 +4,20 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
+    name: 'oioio',
+    executableName: 'oioio',
+    appBundleId: 'com.oioio.app',
+    icon: './assets/icons/oioio',
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        name: 'oioio',
+        iconUrl: './assets/icons/oioio.ico',
+        setupIcon: './assets/icons/oioio.ico',
+      },
     },
     {
       name: '@electron-forge/maker-zip',
@@ -20,16 +28,28 @@ module.exports = {
       // Creates a .dmg installer that users can drag and drop to install
       name: '@electron-forge/maker-dmg',
       config: {
-        format: 'ULFO'
+        format: 'ULFO',
+        name: 'oioio',
+        icon: './assets/icons/oioio.icns',
       },
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {},
+      config: {
+        options: {
+          name: 'oioio',
+          icon: './assets/icons/oioio_icon.png',
+        },
+      },
     },
     {
       name: '@electron-forge/maker-rpm',
-      config: {},
+      config: {
+        options: {
+          name: 'oioio',
+          icon: './assets/icons/oioio_icon.png',
+        },
+      },
     },
   ],
   plugins: [
@@ -68,4 +88,16 @@ module.exports = {
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
     }),
   ],
+  publishers: [
+    {
+      name: '@electron-forge/publisher-github',
+      config: {
+        repository: {
+          owner: 'nkbud',
+          name: 'oioio-desktop'
+        },
+        prerelease: false
+      }
+    }
+  ]
 };

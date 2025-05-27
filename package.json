@@ -1,8 +1,8 @@
 {
-  "name": "oioio-desktop",
-  "productName": "oioio-desktop",
+  "name": "oioio",
+  "productName": "oioio",
   "version": "0.0.1",
-  "description": "My Electron application description",
+  "description": "oioio desktop application",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
@@ -27,6 +27,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
     "@electron-forge/plugin-fuses": "^7.8.1",
     "@electron-forge/plugin-webpack": "^7.8.1",
+    "@electron-forge/publisher-github": "^7.8.1",
     "@electron/fuses": "^1.8.0",
     "@vercel/webpack-asset-relocator-loader": "^1.7.3",
     "css-loader": "^6.11.0",
@@ -35,6 +36,8 @@
     "style-loader": "^3.3.4"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.1"
+    "electron-log": "^5.4.0",
+    "electron-squirrel-startup": "^1.0.1",
+    "electron-updater": "^6.6.2"
   }
 }

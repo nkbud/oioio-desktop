@@ -7,7 +7,6 @@ module.exports = {
     name: 'oioio',
     executableName: 'oioio',
     appBundleId: 'com.oioio.app',
-    icon: './src/assets/icon', // If you have app icons, specify their path here
   },
   rebuildConfig: {},
   makers: [
@@ -71,17 +70,6 @@ module.exports = {
         },
       },
     },
-    // Configuration for publishing the app
-    {
-      name: '@electron-forge/publisher-github',
-      config: {
-        repository: {
-          owner: 'nkbud',
-          name: 'oioio-desktop'
-        },
-        prerelease: false
-      }
-    },
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
     new FusesPlugin({
@@ -94,4 +82,16 @@ module.exports = {
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
     }),
   ],
+  publishers: [
+    {
+      name: '@electron-forge/publisher-github',
+      config: {
+        repository: {
+          owner: 'nkbud',
+          name: 'oioio-desktop'
+        },
+        prerelease: false
+      }
+    }
+  ]
 };

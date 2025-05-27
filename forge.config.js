@@ -7,6 +7,7 @@ module.exports = {
     name: 'oioio',
     executableName: 'oioio',
     appBundleId: 'com.oioio.app',
+    icon: './assets/icons/oioio',
   },
   rebuildConfig: {},
   makers: [
@@ -14,6 +15,8 @@ module.exports = {
       name: '@electron-forge/maker-squirrel',
       config: {
         name: 'oioio',
+        iconUrl: './assets/icons/oioio.ico',
+        setupIcon: './assets/icons/oioio.ico',
       },
     },
     {
@@ -27,6 +30,7 @@ module.exports = {
       config: {
         format: 'ULFO',
         name: 'oioio',
+        icon: './assets/icons/oioio.icns',
       },
     },
     {
@@ -34,6 +38,7 @@ module.exports = {
       config: {
         options: {
           name: 'oioio',
+          icon: './assets/icons/oioio_icon.png',
         },
       },
     },
@@ -42,6 +47,7 @@ module.exports = {
       config: {
         options: {
           name: 'oioio',
+          icon: './assets/icons/oioio_icon.png',
         },
       },
     },

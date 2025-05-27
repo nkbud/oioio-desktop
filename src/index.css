@@ -5,3 +5,39 @@ body {
   max-width: 38rem;
   padding: 2rem;
 }
+
+.about-section {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+}
+
+.about-section p {
+  margin: 0.5rem 0;
+}
+
+.about-section button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.update-notification {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+#restart-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+#restart-button:hover {
+  background-color: #45a049;
+}

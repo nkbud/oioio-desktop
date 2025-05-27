@@ -16,6 +16,8 @@ module.exports = {
       platforms: ['darwin'],
     },
     {
+      // DMG maker for macOS distribution
+      // Creates a .dmg installer that users can drag and drop to install
       name: '@electron-forge/maker-dmg',
       config: {
         format: 'ULFO'

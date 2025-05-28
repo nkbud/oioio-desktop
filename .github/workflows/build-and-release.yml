@@ -1,11 +1,10 @@
 name: Build and Release
 
-# This workflow automatically builds macOS artifacts (.dmg and .zip) for each push to main
+# This workflow builds macOS artifacts (.dmg and .zip) when manually triggered
 # It automatically increments version numbers and creates releases with the artifacts
 
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: write

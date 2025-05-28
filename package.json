@@ -1,8 +1,8 @@
 {
-  "name": "oioio-desktop",
-  "productName": "oioio-desktop",
-  "version": "1.0.0",
-  "description": "My Electron application description",
+  "name": "oioio",
+  "productName": "oioio",
+  "version": "0.0.1",
+  "description": "oioio desktop application",
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
@@ -20,6 +20,7 @@
   "devDependencies": {
     "@electron-forge/cli": "^7.8.1",
     "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-dmg": "^7.8.1",
     "@electron-forge/maker-rpm": "^7.8.1",
     "@electron-forge/maker-squirrel": "^7.8.1",
     "@electron-forge/maker-zip": "^7.8.1",
@@ -35,6 +36,8 @@
     "style-loader": "^3.3.4"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.1"
+    "electron-log": "^5.4.0",
+    "electron-squirrel-startup": "^1.0.1",
+    "electron-updater": "^6.6.2"
   }
 }

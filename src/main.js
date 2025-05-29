@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
 const { autoUpdater } = require('electron-updater');
 
@@ -70,7 +70,7 @@ autoUpdater.on('checking-for-update', () => {
 
 autoUpdater.on('update-available', (info) => {
   console.log('Update available:', info);
-  let mainWindow = BrowserWindow.getAllWindows()[0];
+  const mainWindow = BrowserWindow.getAllWindows()[0];
   if (mainWindow) {
     mainWindow.webContents.send('update-available');
   }
@@ -90,7 +90,7 @@ autoUpdater.on('download-progress', (progressObj) => {
   logMessage = logMessage + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
   console.log(logMessage);
   
-  let mainWindow = BrowserWindow.getAllWindows()[0];
+  const mainWindow = BrowserWindow.getAllWindows()[0];
   if (mainWindow) {
     mainWindow.webContents.send('download-progress', progressObj);
   }
@@ -98,7 +98,7 @@ autoUpdater.on('download-progress', (progressObj) => {
 
 autoUpdater.on('update-downloaded', (info) => {
   console.log('Update downloaded:', info);
-  let mainWindow = BrowserWindow.getAllWindows()[0];
+  const mainWindow = BrowserWindow.getAllWindows()[0];
   if (mainWindow) {
     mainWindow.webContents.send('update-downloaded');
   }

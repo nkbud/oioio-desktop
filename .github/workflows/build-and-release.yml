@@ -1,22 +1,112 @@
 name: Build and Release
 
-# This workflow builds macOS artifacts (.dmg and .zip) when manually triggered
-# Version numbers must be provided manually when triggering the workflow
+# Enhanced workflow for reliable cross-platform builds and releases
+# Supports manual triggers, automatic version management, and comprehensive error handling
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g. 1.0.0)'
-        required: true
+        description: 'Version number (e.g. 1.0.0) - leave empty to auto-increment patch'
+        required: false
         type: string
+      release_type:
+        description: 'Type of release'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
 
 permissions:
   contents: write
+  issues: read
+  pull-requests: read
 
 jobs:
-  build-and-release:
-    runs-on: macos-latest
+  # Pre-flight checks
+  checks:
+    name: Pre-flight Checks
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      should_release: ${{ steps.should_release.outputs.should_release }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: npm
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run linting
+      run: npm run lint
+
+    - name: Run dependency audit
+      run: npm run deps:check
+
+    - name: Determine version
+      id: version
+      run: |
+        if [ -n "${{ github.event.inputs.version }}" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+          echo "Using manual version: $VERSION"
+        elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          npm run version:${{ github.event.inputs.release_type }}
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Auto-incremented version: $VERSION"
+        else
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Using current version: $VERSION"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Check if should release
+      id: should_release
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          echo "should_release=true" >> $GITHUB_OUTPUT
+        else
+          echo "should_release=false" >> $GITHUB_OUTPUT
+        fi
+
+  # Build for different platforms
+  build:
+    name: Build ${{ matrix.os }}
+    needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+          - os: macos-latest
+            platform: darwin 
+            arch: arm64
+          - os: windows-latest
+            platform: win32
+            arch: x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+
+    runs-on: ${{ matrix.os }}
 
     env:
       APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -26,20 +116,21 @@ jobs:
       CI: true
 
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@v4
+
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: 18
         cache: npm
 
     - name: Install dependencies
       run: npm ci
-    
-    # Set up Apple certificates for code signing
+
+    # Set up Apple certificates for code signing (macOS only)
     - name: Import Apple Developer Certificate
-      if: env.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 && env.APPLE_DEVELOPER_CERTIFICATE_PASSWORD
+      if: matrix.platform == 'darwin' && env.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64
+      shell: bash
       run: |
         # Create a temporary directory for the certificate
         mkdir -p $RUNNER_TEMP/certificates
@@ -56,64 +147,117 @@ jobs:
         
         # Clean up
         rm -rf $RUNNER_TEMP/certificates
-    
+
     - name: Update package.json version
       run: |
-        VERSION="${{ github.event.inputs.version }}"
+        VERSION="${{ needs.checks.outputs.version }}"
         npm version $VERSION --no-git-tag-version
-    
+
     - name: Build the app
-      run: npm run make
-    
-    - name: Find artifacts
+      run: npm run make -- --arch=${{ matrix.arch }}
+
+    - name: Find and list artifacts
       id: find_artifacts
+      shell: bash
       run: |
-        # List all artifacts to debug
-        find ./out -type f -name "*.dmg" -o -name "*.zip"
+        echo "=== Build completed for ${{ matrix.platform }}-${{ matrix.arch }} ==="
         
-        # Find DMG artifact
-        DMG_PATH=$(find ./out/make -name "*.dmg" | head -n 1)
-        echo "DMG artifact found at: $DMG_PATH"
-        echo "dmg_path=$DMG_PATH" >> $GITHUB_OUTPUT
+        # List all artifacts for debugging
+        echo "Available artifacts:"
+        find ./out -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) || echo "No artifacts found"
         
-        # Find ZIP artifact
-        ZIP_PATH=$(find ./out/make -name "*.zip" | head -n 1)
-        echo "ZIP artifact found at: $ZIP_PATH"
-        echo "zip_path=$ZIP_PATH" >> $GITHUB_OUTPUT
+        # Create artifact paths array
+        ARTIFACTS=""
+        while IFS= read -r -d '' file; do
+          if [ -n "$ARTIFACTS" ]; then
+            ARTIFACTS="$ARTIFACTS,"
+          fi
+          ARTIFACTS="$ARTIFACTS$file"
+        done < <(find ./out -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) -print0)
         
-        # Extract filenames for asset names
-        DMG_FILENAME=$(basename "$DMG_PATH")
-        ZIP_FILENAME=$(basename "$ZIP_PATH")
-        echo "dmg_filename=$DMG_FILENAME" >> $GITHUB_OUTPUT
-        echo "zip_filename=$ZIP_FILENAME" >> $GITHUB_OUTPUT
-    
-    - name: Create GitHub Release
+        echo "artifacts=$ARTIFACTS" >> $GITHUB_OUTPUT
+        echo "Found artifacts: $ARTIFACTS"
+
+    - name: Upload build artifacts
+      if: steps.find_artifacts.outputs.artifacts != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: oioio-${{ matrix.platform }}-${{ matrix.arch }}-${{ needs.checks.outputs.version }}
+        path: |
+          ./out/make/**/*
+        retention-days: 30
+
+  # Create release (only when needed)
+  release:
+    name: Create Release
+    needs: [checks, build]
+    if: needs.checks.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./release-artifacts
+
+    - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.event.inputs.version }}
-        release_name: Release ${{ github.event.inputs.version }}
+        tag_name: v${{ needs.checks.outputs.version }}
+        release_name: Release v${{ needs.checks.outputs.version }}
         draft: false
         prerelease: false
-    
-    - name: Upload DMG Artifact
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ steps.find_artifacts.outputs.dmg_path }}
-        asset_name: oioio-desktop-${{ github.event.inputs.version }}.dmg
-        asset_content_type: application/octet-stream
-    
-    - name: Upload ZIP Artifact
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ steps.find_artifacts.outputs.zip_path }}
-        asset_name: oioio-desktop-${{ github.event.inputs.version }}.zip
-        asset_content_type: application/zip
+        body: |
+          ## Release v${{ needs.checks.outputs.version }}
+          
+          ### 🚀 What's New
+          - Cross-platform builds for macOS (Intel & Apple Silicon), Windows, and Linux
+          - Enhanced build process with automated quality checks
+          - Improved error handling and logging
+          
+          ### 📦 Downloads
+          Choose the appropriate download for your platform:
+          - **macOS**: Download the `.dmg` file for easy installation
+          - **Windows**: Download the `.exe` installer
+          - **Linux**: Download the `.deb` (Ubuntu/Debian) or `.rpm` (RedHat/CentOS) package
+          
+          ### 🔄 Auto-Updates
+          This version includes automatic update functionality. The app will check for updates and notify you when new versions are available.
+
+    - name: Upload Release Assets
+      shell: bash
+      run: |
+        # Function to upload a file to the release
+        upload_file() {
+          local file="$1"
+          local filename=$(basename "$file")
+          local content_type="application/octet-stream"
+          
+          # Determine content type based on file extension
+          case "${filename##*.}" in
+            dmg) content_type="application/x-apple-diskimage" ;;
+            exe) content_type="application/x-msdownload" ;;
+            zip) content_type="application/zip" ;;
+            deb) content_type="application/vnd.debian.binary-package" ;;
+            rpm) content_type="application/x-rpm" ;;
+            AppImage) content_type="application/x-executable" ;;
+          esac
+          
+          echo "Uploading $filename..."
+          curl \
+            -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: $content_type" \
+            --data-binary @"$file" \
+            "${{ steps.create_release.outputs.upload_url }}?name=$filename"
+        }
+        
+        # Upload all artifacts
+        find ./release-artifacts -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) | while read file; do
+          upload_file "$file"
+        done

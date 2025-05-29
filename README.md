@@ -2,81 +2,83 @@
 
 Desktop application for oioio.
 
-## Development
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 18 or higher
 - npm
 
-### Setup
+### Setup & Run
 
 ```bash
+# Install dependencies
 npm install
-```
 
-### Running Development Mode
-
-```bash
+# Start development server
 npm start
 ```
 
-### Building for Production
+## Building & Release
+
+For detailed build instructions, code signing setup, and release process, see [BUILD.md](BUILD.md).
+
+### Quick Commands
 
 ```bash
+# Build for current platform
 npm run make
+
+# Run linting
+npm run lint
+
+# Clean build artifacts
+npm run clean
 ```
 
-## macOS Code Signing and Notarization
+## Automated Releases
 
-The application is automatically code signed and notarized for macOS during the GitHub Actions build process. This ensures the app can be run on macOS without Gatekeeper warnings.
+This project uses GitHub Actions for automated cross-platform builds and releases:
 
-### Required Secrets for macOS Signing
+- **Manual**: Trigger workflow in GitHub Actions with version selection
+- **Automatic**: Push to main branch for automatic release
+- **Platforms**: macOS (Intel & Apple Silicon), Windows, Linux
 
-The following GitHub secrets need to be set up in the repository settings for proper code signing and notarization:
+## Development
 
-- `APPLE_ID`: The Apple ID email used for notarization
-- `APPLE_ID_PASSWORD`: An app-specific password for the Apple ID
-- `APPLE_TEAM_ID`: The Team ID from your Apple Developer account
-- `APPLE_DEVELOPER_IDENTITY`: The name of your Developer ID certificate (e.g., "Developer ID Application: Your Name (TEAM_ID)")
-- `APPLE_DEVELOPER_CERTIFICATE_P12_BASE64`: The base64-encoded p12 certificate file
-- `APPLE_DEVELOPER_CERTIFICATE_PASSWORD`: The password for the p12 certificate
-- `KEYCHAIN_PASSWORD`: A password to secure the keychain during the build process
+The app is built with:
+- [Electron](https://electronjs.org/) - Desktop app framework
+- [Electron Forge](https://www.electronforge.io/) - Build and packaging
+- [Webpack](https://webpack.js.org/) - Module bundling
+- [ESLint](https://eslint.org/) - Code quality
 
-### Generating a Certificate for Code Signing
+### Project Structure
 
-1. Obtain a "Developer ID Application" certificate from your [Apple Developer Account](https://developer.apple.com/account/resources/certificates/list)
-2. Export the certificate from Keychain Access as a .p12 file
-3. Convert the .p12 file to base64 format:
-   ```bash
-   base64 -i path/to/certificate.p12 -o certificate-base64.txt
-   ```
-4. Use the contents of certificate-base64.txt as the value for the `APPLE_DEVELOPER_CERTIFICATE_P12_BASE64` secret
+```
+├── src/                 # Source code
+│   ├── main.js         # Main process
+│   ├── renderer.js     # Renderer process
+│   └── preload.js      # Preload script
+├── assets/             # Static assets
+├── .github/workflows/  # CI/CD workflows
+├── forge.config.js     # Electron Forge configuration
+└── BUILD.md           # Detailed build instructions
+```
 
-### Manual Notarization (if needed)
+## Features
 
-To manually notarize an app:
+- ✅ Cross-platform support (macOS, Windows, Linux)
+- ✅ Auto-updater integration
+- ✅ Code signing and notarization (macOS)
+- ✅ Modern development workflow
+- ✅ Automated CI/CD pipeline
 
-1. Package the app using electron-forge:
-   ```bash
-   npm run make
-   ```
+## Contributing
 
-2. Notarize the .app bundle using Apple's notarytool:
-   ```bash
-   xcrun notarytool submit path/to/YourApp.app --apple-id your-apple-id@example.com --password your-app-specific-password --team-id YOUR_TEAM_ID --wait
-   ```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run `npm run lint` to check code quality
+5. Create a pull request
 
-3. Staple the notarization to the app:
-   ```bash
-   xcrun stapler staple path/to/YourApp.app
-   ```
-
-## Release Process
-
-Releases are automatically created when code is pushed to the main branch. The GitHub Actions workflow:
-
-1. Increments the version number
-2. Builds and signs the application
-3. Notarizes the application (macOS only)
-4. Creates a GitHub release with the packaged artifacts
+See [BUILD.md](BUILD.md) for detailed development and release instructions.

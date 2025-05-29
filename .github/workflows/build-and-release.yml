@@ -23,7 +23,6 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'docs/**'
       - '*.md'
       - '.gitignore'
 
@@ -156,35 +155,11 @@ jobs:
     - name: Build the app
       run: npm run make -- --arch=${{ matrix.arch }}
 
-    - name: Find and list artifacts
-      id: find_artifacts
-      shell: bash
-      run: |
-        echo "=== Build completed for ${{ matrix.platform }}-${{ matrix.arch }} ==="
-        
-        # List all artifacts for debugging
-        echo "Available artifacts:"
-        find ./out -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) || echo "No artifacts found"
-        
-        # Create artifact paths array
-        ARTIFACTS=""
-        while IFS= read -r -d '' file; do
-          if [ -n "$ARTIFACTS" ]; then
-            ARTIFACTS="$ARTIFACTS,"
-          fi
-          ARTIFACTS="$ARTIFACTS$file"
-        done < <(find ./out -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) -print0)
-        
-        echo "artifacts=$ARTIFACTS" >> $GITHUB_OUTPUT
-        echo "Found artifacts: $ARTIFACTS"
-
     - name: Upload build artifacts
-      if: steps.find_artifacts.outputs.artifacts != ''
       uses: actions/upload-artifact@v4
       with:
         name: oioio-${{ matrix.platform }}-${{ matrix.arch }}-${{ needs.checks.outputs.version }}
-        path: |
-          ./out/make/**/*
+        path: ./out/make/**/*
         retention-days: 30
 
   # Create release (only when needed)
@@ -204,14 +179,15 @@ jobs:
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ needs.checks.outputs.version }}
-        release_name: Release v${{ needs.checks.outputs.version }}
+        name: Release v${{ needs.checks.outputs.version }}
         draft: false
         prerelease: false
+        files: ./release-artifacts/**/*
         body: |
           ## Release v${{ needs.checks.outputs.version }}
           
@@ -228,36 +204,3 @@ jobs:
           
           ### 🔄 Auto-Updates
           This version includes automatic update functionality. The app will check for updates and notify you when new versions are available.
-
-    - name: Upload Release Assets
-      shell: bash
-      run: |
-        # Function to upload a file to the release
-        upload_file() {
-          local file="$1"
-          local filename=$(basename "$file")
-          local content_type="application/octet-stream"
-          
-          # Determine content type based on file extension
-          case "${filename##*.}" in
-            dmg) content_type="application/x-apple-diskimage" ;;
-            exe) content_type="application/x-msdownload" ;;
-            zip) content_type="application/zip" ;;
-            deb) content_type="application/vnd.debian.binary-package" ;;
-            rpm) content_type="application/x-rpm" ;;
-            AppImage) content_type="application/x-executable" ;;
-          esac
-          
-          echo "Uploading $filename..."
-          curl \
-            -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Content-Type: $content_type" \
-            --data-binary @"$file" \
-            "${{ steps.create_release.outputs.upload_url }}?name=$filename"
-        }
-        
-        # Upload all artifacts
-        find ./release-artifacts -type f \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" \) | while read file; do
-          upload_file "$file"
-        done

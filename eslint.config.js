@@ -6,7 +6,6 @@ module.exports = [
       'out/**',
       'node_modules/**',
       '.webpack/**',
-      'docs/**',
       'dist/**',
       'coverage/**',
     ],

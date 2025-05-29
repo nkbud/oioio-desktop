@@ -6,10 +6,20 @@
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
+    "start:dev": "NODE_ENV=development electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
+    "make:all": "electron-forge make --platform=all",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "clean": "rm -rf out .webpack dist",
+    "deps:check": "npm audit",
+    "deps:fix": "npm audit fix",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version",
+    "health-check": "bash scripts/health-check.sh"
   },
   "keywords": [],
   "author": {
@@ -29,10 +39,13 @@
     "@electron-forge/plugin-webpack": "^7.8.1",
     "@electron-forge/publisher-github": "^7.8.1",
     "@electron/fuses": "^1.8.0",
+    "@eslint/js": "^9.27.0",
     "@vercel/webpack-asset-relocator-loader": "^1.7.3",
     "css-loader": "^6.11.0",
     "electron": "36.3.1",
     "electron-notarize": "^1.2.2",
+    "eslint": "^9.27.0",
+    "eslint-plugin-node": "^11.1.0",
     "node-loader": "^2.1.0",
     "style-loader": "^3.3.4"
   },

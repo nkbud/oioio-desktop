@@ -8,7 +8,7 @@
 - **Linting errors**: Cleaned up source code issues
 
 ### 🚀 Enhanced Developer Experience
-- **New scripts**: Added 14 helpful npm scripts for common tasks
+- **New scripts**: Added essential npm scripts for common tasks
 - **Health checks**: Automated environment validation
 - **Version management**: Streamlined patch/minor/major versioning
 - **Clean operations**: Easy artifact cleanup
@@ -44,8 +44,8 @@ npm run version:minor    # Increment minor version
 npm run version:major    # Increment major version
 
 # Maintenance
-npm run deps:check       # Check for vulnerabilities
-npm run deps:fix         # Fix security issues
+npm audit                # Check for vulnerabilities
+npm audit fix            # Fix security issues
 ```
 
 ## Release Process

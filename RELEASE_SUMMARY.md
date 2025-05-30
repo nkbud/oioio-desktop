@@ -58,8 +58,8 @@ npm audit fix            # Fix security issues
 
 ### Manual
 1. Run `npm run version:patch` (or minor/major)
-2. Run `npm run make:all` 
-3. Create GitHub release with artifacts
+2. Run `npm run make` 
+3. Upload artifacts from `./out/make/` to GitHub release
 
 ## Success Criteria Met ✅
 

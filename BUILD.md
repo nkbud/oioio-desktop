@@ -31,12 +31,10 @@ npm start
 | Script | Description |
 |--------|-------------|
 | `npm start` | Start the app in development mode |
-| `npm run start:dev` | Start with explicit development environment |
 | `npm run lint` | Run ESLint to check code quality |
 | `npm run lint:fix` | Automatically fix linting issues |
 | `npm run clean` | Remove build artifacts and cache |
-| `npm run deps:check` | Check for security vulnerabilities |
-| `npm run deps:fix` | Fix security vulnerabilities |
+| `npm run health-check` | Validate build environment |
 
 ### Code Quality
 
@@ -51,13 +49,6 @@ npm run lint:fix
 ```
 
 ## Building
-
-### Development Build
-
-```bash
-# Build for your current platform
-npm run package
-```
 
 ### Production Build
 
@@ -114,23 +105,13 @@ If you need to release manually:
    npm run version:patch  # or minor/major
    ```
 
-2. **Build for All Platforms**:
+2. **Build for Current Platform**:
    ```bash
-   npm run make:all
+   npm run make
    ```
 
 3. **Create GitHub Release**:
-   ```bash
-   # Tag the release
-   git tag v$(node -p "require('./package.json').version")
-   git push origin --tags
-
-   # Create release using GitHub CLI
-   gh release create v$(node -p "require('./package.json').version") \
-     --title "Release v$(node -p "require('./package.json').version")" \
-     --notes "Release notes here" \
-     ./out/make/**/*
-   ```
+   Use the GitHub web interface to create a release and upload the artifacts from `./out/make/`.
 
 ## Platform-Specific Instructions
 
@@ -186,7 +167,7 @@ For automated releases, configure these secrets in your GitHub repository:
 
 - ✅ Cross-platform builds (macOS, Windows, Linux)
 - ✅ Automatic version management
-- ✅ Code quality checks (linting, security audit)
+- ✅ Code quality checks (linting)
 - ✅ Code signing and notarization (macOS)
 - ✅ Comprehensive error handling
 - ✅ Artifact upload and release creation
